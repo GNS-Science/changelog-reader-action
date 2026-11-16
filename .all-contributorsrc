@@ -90,7 +90,8 @@
       "profile": "https://github.com/danilogco",
       "contributions": [
         "code",
-        "bug"
+        "bug",
+        "infra"
       ]
     },
     {
@@ -110,11 +111,49 @@
       "contributions": [
         "ideas"
       ]
+    },
+    {
+      "login": "mrks115",
+      "name": "Markus Brüx",
+      "avatar_url": "https://avatars.githubusercontent.com/u/3636209?v=4",
+      "profile": "https://github.com/mrks115",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "guihkx",
+      "name": "Guilherme Silva",
+      "avatar_url": "https://avatars.githubusercontent.com/u/626206?v=4",
+      "profile": "https://github.com/guihkx",
+      "contributions": [
+        "bug"
+      ]
+    },
+    {
+      "login": "stronk7",
+      "name": "Eloy Lafuente",
+      "avatar_url": "https://avatars.githubusercontent.com/u/167147?v=4",
+      "profile": "https://github.com/stronk7",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "davidgamero",
+      "name": "David Gamero",
+      "avatar_url": "https://avatars.githubusercontent.com/u/4248857?v=4",
+      "profile": "https://github.com/davidgamero",
+      "contributions": [
+        "infra"
+      ]
     }
   ],
   "projectName": "changelog-reader-action",
   "projectOwner": "mindsers",
   "repoType": "github",
   "repoHost": "https://github.com",
-  "contributorsPerLine": 7
+  "contributorsPerLine": 7,
+  "commitType": "docs",
+  "commitConvention": "angular"
 }

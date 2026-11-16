@@ -1,102 +1,95 @@
-<p align="center">
-  <a href="https://github.com/actions/javascript-action/actions"><img alt="javscript-action status" src="https://github.com/actions/javascript-action/workflows/units-test/badge.svg"></a>
-</p>
+# Maintainer Guide
 
-# Create a JavaScript Action
+This document covers local development and releasing _Changelog Reader Action_.
+For end-user documentation, see the [README](../README.md).
 
-## Code in Develop
+## Local development
 
-Install the dependencies:
-
-```bash
-$ npm install
-```
-
-Run the tests:
+Install dependencies and run the test suite:
 
 ```bash
-$ npm test
-
- PASS  ./index.test.js
-  ✓ throws invalid number (3ms)
-  ✓ wait 500 ms (504ms)
-  ✓ test runs (95ms)
-
-...
+npm ci
+npm test
 ```
 
-## Change the Code
+`npm test` runs Biome (lint + format check), TypeScript's type checker, and the
+Vitest suite. All tests live next to the file they exercise
+(`src/foo.ts` ↔ `src/foo.test.ts`).
 
-Most toolkit and CI/CD operations involve async operations so the action is run in an async function.
-
-```javascript
-const core = require('@actions/core');
-...
-
-async function run() {
-  try {
-      ...
-  }
-  catch (error) {
-    core.setFailed(error.message);
-  }
-}
-
-run()
-```
-
-See the [toolkit documentation](https://github.com/actions/toolkit/blob/master/README.md#packages) for the various packages.
-
-## Package for distribution
-
-GitHub Actions will run the entry point from the action.yml. Packaging assembles the code into one file that can be checked in to Git, enabling fast and reliable execution and preventing the need to check in node_modules.
-
-Actions are run from GitHub repos. Packaging the action will create a packaged action in the `dist` folder.
-
-Run package:
+To rebuild the bundled action output after changing anything in `src/`:
 
 ```bash
-npm run package
+npm run build
 ```
 
-Since the packaged `index.js` is ran from the `dist` folder.
+This runs `@vercel/ncc` to bundle `index.ts` and its dependencies into a single
+`dist/index.js` file. The `prepare` script in `package.json` runs the same
+command automatically on `npm install`, so the bundle stays in sync as long as
+you install before committing.
 
-```bash
-git add dist
-```
+## Why `dist/` is committed
 
-## Create a release tags
+GitHub Actions written in JavaScript run directly from the action repository at
+the SHA a consumer pins — there is no install step on the runner. The bundled
+`dist/index.js` is therefore the artifact that actually executes for every
+caller. CI enforces this with a drift check: after running the test suite, it
+re-runs `npm run build` and fails if the result differs from what is committed.
+If you see that step fail, run `npm run build` locally and commit the updated
+bundle.
 
-Changelog Reader follow semantic versionning. So you have to create your tag.
+## CHANGELOG conventions
 
-```bash
-$ git tag -s v1.0.3
-```
+Each PR that introduces a user-visible change updates the `## [Unreleased]`
+section of `CHANGELOG.md` directly, in
+[Keep a Changelog](https://keepachangelog.com/en/1.0.0/) style. Internal
+maintenance (refactors, test-only changes, build tooling) does not need a
+changelog entry.
 
-To ease the work of maintainer we also create (or update) shortcut tags:
+## Releasing a new version
 
-```bash
-$ git tag -d v1
-$ git push --delete origin v1
-$ git tag -a v1
-```
+The action follows [Semantic Versioning](https://semver.org/). Releases
+maintain a floating major-version tag (`v2`, `v3`, ...) so consumers pinned to
+`mindsers/changelog-reader-action@v2` pick up new patch and minor versions
+automatically.
 
-```bash
-$ git push --tags
-```
+The release process is driven by a tag-triggered workflow
+(`.github/workflows/release.yml`): pushing a `vX.Y.Z` tag creates the GitHub
+Release and moves the floating major tag in one shot.
 
-Now you have to create the GitHub Release for this new version (v1.0.3) and check "marketplace". This action is now published! :rocket:
+1. On a branch (or directly on `master` if branch protection permits), make a
+   single `chore(release): vX.Y.Z` commit that:
 
-See the [versioning documentation](https://github.com/actions/toolkit/blob/master/docs/action-versioning.md)
+   - Bumps the `version` field in `package.json` to `X.Y.Z`.
+   - In `CHANGELOG.md`, renames the existing `## [Unreleased]` heading to
+     `## [X.Y.Z] - YYYY-MM-DD` and adds a fresh empty `## [Unreleased]` heading
+     above it.
+   - Adds the new comparison link at the bottom of `CHANGELOG.md`:
+     `[X.Y.Z]: https://github.com/mindsers/changelog-reader-action/compare/v<previous>...vX.Y.Z`.
 
-## Usage
+2. Merge the release commit to `master`.
 
-You can now consume the action by referencing the v1 branch:
+3. Tag and push:
 
-```yaml
-uses: actions/javascript-action@v1
-with:
-  milliseconds: 1000
-```
+   ```bash
+   git tag -s vX.Y.Z <release-commit-sha> -m "Release vX.Y.Z"
+   git push origin vX.Y.Z
+   ```
 
-See the [actions tab](https://github.com/actions/javascript-action/actions) for runs of this action! :rocket:
+4. The release workflow fires automatically and:
+
+   - Validates the tag matches `package.json`'s version (fail-fast guard).
+   - Extracts the `## [X.Y.Z]` section from `CHANGELOG.md` as the release body.
+   - Creates the GitHub Release for `vX.Y.Z`.
+   - Force-moves the floating major tag (e.g., `v2`) to point at the new
+     release.
+
+5. If the action is published to the GitHub Marketplace, edit the new Release
+   on GitHub and tick the "Publish this Action to the GitHub Marketplace" box.
+   This is a one-time UI step per release that the workflow cannot perform on
+   your behalf.
+
+The workflow only runs on `v*.*.*` tag pushes — it does not fire on regular
+master pushes, PR merges, or any other event.
+
+For background on action versioning, see
+[actions/toolkit's versioning guide](https://github.com/actions/toolkit/blob/main/docs/action-versioning.md).

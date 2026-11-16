@@ -7,6 +7,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.4.0] - 2026-05-20
+
+### Added
+
+- New `changes_file` output: a path to a temporary file containing the matched entry's text, for tools that consume release notes as a file (goreleaser, `gh release create --notes-file`, etc.). Resolves #68.
+- New `version_scheme` input (`semver` default, or `pep440`) enabling extraction and validation of Python PEP 440 version identifiers like `0.1.0a1`. Resolves #38.
+
+### Security
+
+- Harden the reference-link parsing regex against catastrophic backtracking (CodeQL `js/redos`). The previous pattern had a `.` character in two overlapping character classes; a hostile CHANGELOG line could in principle trigger exponential matching time. The fix tightens the label character class without changing the regex's accepted inputs.
+
+## [2.3.0] - 2026-05-19
+
+### Changed
+
+- Use Node 24 as the action runtime.
+- Refactor the internal entry, validation, and pipeline modules for type safety and easier maintenance. No change in observable behavior for action consumers.
+- Modernize the bundled runtime dependencies: `@actions/core` 1.x → 2.x and the YAML parser 1.x → 2.x. The action's input/output contract is unchanged.
+
+### Fixed
+
+- Declare `semver` as a runtime dependency instead of a dev dependency.
+- Stop dumping the full CHANGELOG content to debug logs when parsing entries and links.
+- Detect the `Unreleased` heading case-insensitively when picking the most recent released entry.
+- Warn (instead of silently degrading) when `validation_level` or `validation_depth` inputs are invalid; fall back to safe defaults.
+- Warn (instead of silently using an empty config) when an explicit `config_file` does not exist.
+- Validate the shape of YAML/JSON config files; warn on per-field type mismatches and reject non-object roots.
+- Recognize bare `## Unreleased` headings in addition to the bracketed `## [Unreleased]` form.
+
+## [2.2.3] - 2024-03-10
+
+### Fixed
+
+- Upgrade dependencies to solve deprecation issues.
+- Use node v20
+- Remove useless empty line between links in the body of a version
+
 ## [2.2.2] - 2022-11-23
 
 ### Fixed
@@ -126,7 +163,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - CHANGELOG can be parsed by the github action
 
-[unreleased]: https://github.com/olivierlacan/keep-a-changelog/compare/v2.2.2...HEAD
+[unreleased]: https://github.com/mindsers/changelog-reader-action/compare/v2.4.0...HEAD
+[2.4.0]: https://github.com/mindsers/changelog-reader-action/compare/v2.3.0...v2.4.0
+[2.3.0]: https://github.com/mindsers/changelog-reader-action/compare/v2.2.3...v2.3.0
+[2.2.3]: https://github.com/mindsers/changelog-reader-action/compare/v2.2.2...v2.2.3
 [2.2.2]: https://github.com/mindsers/changelog-reader-action/compare/v2.2.1...v2.2.2
 [2.2.1]: https://github.com/mindsers/changelog-reader-action/compare/v2.2.0...v2.2.1
 [2.2.0]: https://github.com/mindsers/changelog-reader-action/compare/v2.1.1...v2.2.0
